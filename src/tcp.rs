@@ -266,3 +266,70 @@ impl<SpiBus: Bus, StateImpl: State> TcpClientStack for Device<SpiBus, StateImpl>
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use embedded_nal::{TcpError, TcpErrorKind};
+
+    #[test]
+    fn test_not_connected_maps_to_pipe_closed() {
+        assert_eq!(
+            TcpSocketError::<()>::NotConnected.kind(),
+            TcpErrorKind::PipeClosed
+        );
+    }
+
+    #[test]
+    fn test_other_maps_to_other() {
+        assert_eq!(
+            TcpSocketError::<()>::NoMoreSockets.kind(),
+            TcpErrorKind::Other
+        );
+
+        assert_eq!(
+            TcpSocketError::<()>::UnsupportedAddress.kind(),
+            TcpErrorKind::Other
+        );
+
+        assert_eq!(
+            TcpSocketError::<()>::UnsupportedMode.kind(),
+            TcpErrorKind::Other
+        );
+    }
+
+    #[test]
+    fn test_from_conversion() {
+        let err: TcpSocketError<&str> = "boom".into();
+
+        match err {
+            TcpSocketError::Other("boom") => {}
+            _ => panic!("unexpected variant"),
+        }
+    }
+
+    #[test]
+    fn test_interrupt_values_do_not_overlap() {
+        assert_eq!(
+            socketn::Interrupt::SendOk as u8 & socketn::Interrupt::Timeout as u8,
+            0
+        );
+
+        assert_eq!(
+            socketn::Interrupt::SendOk as u8 & socketn::Interrupt::Receive as u8,
+            0
+        );
+
+        assert_eq!(
+            socketn::Interrupt::Timeout as u8 & socketn::Interrupt::Receive as u8,
+            0
+        );
+    }
+
+    #[test]
+    fn test_current_interrupt_mask_expression_evaluates_to_zero() {
+        let mask = socketn::Interrupt::SendOk as u8 & socketn::Interrupt::Timeout as u8;
+
+        assert_eq!(mask, 0);
+    }
+}

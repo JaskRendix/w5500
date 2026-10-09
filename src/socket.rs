@@ -287,4 +287,23 @@ mod test {
             assert_eq!(socket_7.rx_buffer, SOCKET7_BUFFER_RX);
         }
     }
+
+    #[test]
+    fn test_socket_address_formula() {
+        for index in 0..8 {
+            let socket = Socket::new(index);
+
+            let block = index * 4;
+
+            assert_eq!(socket.register(), block + 1);
+            assert_eq!(socket.tx_buffer(), block + 2);
+            assert_eq!(socket.rx_buffer(), block + 3);
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_socket_index_overflow() {
+        let _ = Socket::new(255);
+    }
 }

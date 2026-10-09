@@ -446,12 +446,45 @@ pub mod socketn {
         use core::convert::TryFrom;
 
         use super::Status;
+        use crate::register::common::RetryTime;
 
         #[test]
         fn test_status_from_byte() {
             let udp = 0x22_u8;
             let status = Status::try_from(udp).expect("Should parse to Status");
             assert_eq!(status, Status::Udp);
+        }
+
+        #[test]
+        fn test_retry_time_default() {
+            let retry = RetryTime::default();
+
+            assert_eq!(retry.to_millis(), 200);
+        }
+
+        #[test]
+        fn test_retry_time_from_millis() {
+            let retry = RetryTime::from_millis(200);
+
+            assert_eq!(retry.to_u16(), 2000);
+        }
+
+        #[test]
+        fn test_retry_time_register_roundtrip() {
+            let retry = RetryTime::from_millis(250);
+
+            let register = retry.to_register();
+
+            let recovered = RetryTime::from_register(register);
+
+            assert_eq!(retry, recovered);
+        }
+
+        #[test]
+        fn test_retry_time_register_encoding() {
+            let retry = RetryTime::from_millis(200);
+
+            assert_eq!([0x07, 0xD0], retry.to_register());
         }
     }
 }

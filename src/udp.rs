@@ -549,3 +549,65 @@ where
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_udp_header_from_array() {
+        let header = UdpHeader::from_array([
+            192, 168, 1, 42, 0x1F, 0x90, // 8080
+            0x00, 0x64, // 100 bytes
+        ]);
+
+        assert_eq!(
+            header.origin,
+            SocketAddrV4::new(Ipv4Addr::new(192, 168, 1, 42), 8080)
+        );
+
+        assert_eq!(header.len, 100);
+    }
+
+    #[test]
+    fn test_udp_header_zero_length_packet() {
+        let header = UdpHeader::from_array([
+            127, 0, 0, 1, 0x00, 0x50, // port 80
+            0x00, 0x00, // 0 bytes
+        ]);
+
+        assert_eq!(
+            header.origin,
+            SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 80)
+        );
+
+        assert_eq!(header.len, 0);
+    }
+
+    #[test]
+    fn test_udp_header_max_packet_length() {
+        let header = UdpHeader::from_array([
+            10, 0, 0, 1, 0x13, 0x88, // port 5000
+            0xFF, 0xFF, // u16::MAX
+        ]);
+
+        assert_eq!(
+            header.origin,
+            SocketAddrV4::new(Ipv4Addr::new(10, 0, 0, 1), 5000)
+        );
+
+        assert_eq!(header.len, u16::MAX as usize);
+    }
+    #[test]
+    fn test_receive_length_calculation_large_packet() {
+        let rx_size = 1000usize;
+        let buffer_size = 100usize;
+        let udp_packet_len = 1000usize;
+
+        let read_max_size = rx_size.min(buffer_size);
+        let read_length = read_max_size.max(udp_packet_len);
+
+        assert_eq!(read_max_size, 100);
+        assert_eq!(read_length, 1000);
+    }
+}

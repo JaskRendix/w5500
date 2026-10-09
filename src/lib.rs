@@ -23,7 +23,7 @@ pub use self::{
     uninitialized_device::{InitializeError, UninitializedDevice},
 };
 
-// TODO add better docs to all public items, add unit tests.
+// TODO add better docs to all public items.
 
 /// Settings for wake on LAN.  Allows the W5500 to optionally emit an interrupt upon receiving a packet
 #[repr(u8)]
@@ -147,5 +147,19 @@ mod test {
             // Bit: 0 reserved
         };
         assert_eq!(0b0010_1010, all_enabled.to_u8());
+    }
+
+    #[test]
+    fn test_default_mode() {
+        let mode = Mode::default();
+
+        assert_eq!(0b0000_0010, mode.to_u8());
+    }
+
+    #[test]
+    fn test_mode_to_register() {
+        let mode = Mode::default();
+
+        assert_eq!([0b0000_0010], mode.to_register());
     }
 }
